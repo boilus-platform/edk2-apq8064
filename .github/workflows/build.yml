@@ -1,48 +1,25 @@
 name: C/C++ CI
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
-    - name: Update APT sources
-      run: sudo apt update
-    
-    - name: Install dependencies
-      run: sudo apt install build-essential crossbuild-essential-armhf uuid-dev iasl git nasm python3-distutils
-    
-    - name: Create EDK2 workspace
-      run: mkdir /home/runner/work/EDK2WorkDir
-      
-    - name: Clone sources
-      run: |
-        cd /home/runner/work/EDK2WorkDir/
-        git clone https://github.com/Tianocore/edk2.git -b stable/202011 --depth=1 --recursive 
-        git clone https://github.com/halal-beef/edk2-apq8064 --depth=1 -b new edk2/Lumia535Pkg
-      
-    - name: Build BaseTools
-      run: |
-        cd /home/runner/work/EDK2WorkDir/edk2 
-        make -C BaseTools/
-    - name: Build EDK2
-      run: |
-        cd /home/runner/work/EDK2WorkDir/edk2 
-        . /home/runner/work/EDK2WorkDir/edk2/edksetup.sh 
-        GCC5_ARM_PREFIX=arm-linux-gnueabihf- build -a ARM -p Lumia535Pkg/Lumia535.dsc -t GCC5 -j$(nproc) -s -n 0
-      
-    - name: Create ELF binary
-      run: |
-        cd /home/runner/work/EDK2WorkDir/edk2/Build/Lumia535-ARM/DEBUG_GCC5/FV 
-        arm-linux-gnueabihf-objcopy -I binary -O elf32-littlearm --binary-architecture arm MSM8960_EFI.fd MSM8960_EFI.fd.elf && arm-linux-gnueabihf-ld MSM8960_EFI.fd.elf -T ../../../../Lumia535Pkg/FvWrapper.ld -o ../../../../../emmc_appsboot.mbn
-      
+    - name: CI Build
+      run: chmod +x ci-build.sh && ./ci-build.sh
+
     - uses: actions/upload-artifact@v3
       with:
-       name: emmc_appsboot.mbn
-       path: |
-         /home/runner/work/EDK2WorkDir/emmc_appsboot.mbn
-         /home/runner/work/EDK2WorkDir/edk2/Build/Lumia535-ARM/DEBUG_GCC5/FV/MSM8960_EFI.fd
+        name: Galaxy S4
+        path: ./workspace/boot.tar
+     
+     - name: whatyever
+        run: echo tung tung tung sahur!
